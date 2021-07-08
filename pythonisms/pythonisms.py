@@ -1,5 +1,7 @@
 import time
 
+from _pytest.compat import _setup_collect_fakemodule
+
 def calculate_time(any_fun):
   
   def wrapper(*args,**kwargs):
@@ -22,6 +24,32 @@ def debug_code(any_fun):
 
   return wrapper
 
+def slowdown(x):
+    def wrapper(*arg, **kwargs):
+        time.sleep(1)
+        output = x(*arg, **kwargs)
+        return output
+    return wrapper
+
+def convert_to_float(x):
+    def wrapper(*args, **kwargs):
+        output = x(*args, **kwargs)
+        return float(output)
+    return wrapper
+
+def validate_conditions(x):
+    def wrapper(*args, **kwargs):
+        conditions = [
+            type(args[0]) == str,
+            type(args[1]) == int
+        ]
+        if all(conditions):
+            output = x(*args, **kwargs)
+            return output
+        else:
+            return "passed arguments don't match"
+    return wrapper
+        
 
 class Node():
     def __init__(self, value):
@@ -137,13 +165,13 @@ ll2.append(20)
 ll2.append(50)
 ll2.append(7)
 
-@calculate_time
+# @calculate_time
 def check_equality(ll1, ll2):
     return ll1 == ll2
 
 check_equality(ll, ll2)
 
-@debug_code
+# @debug_code
 def factorial(n):
     if n ==1:
         return 1
@@ -151,3 +179,35 @@ def factorial(n):
         return n * factorial(n-1)
 
 factorial(6)
+y = ll.head
+
+
+# @slowdown
+@convert_to_float
+def summation(li):
+    if len(li) == 0:
+        return 0
+    else:
+        return li[0] + summation(li[1:])
+
+# @validate_conditions
+def calc_age(name, YOB):
+    return f'Hello {name} you are {2021 - YOB} years old'
+
+starting_time = time.time()
+calc_age('Mohammad', 1996)
+ending_time = time.time()
+print(int(ending_time - starting_time))
+
+@calculate_time
+def return_calc_time(name, age):
+    calc_age(name, age)
+
+return_calc_time('Mohammad', 1996)
+
+
+@debug_code
+def add(a, b):
+    return a + b
+
+add(3,4)
